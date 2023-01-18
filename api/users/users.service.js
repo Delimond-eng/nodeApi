@@ -28,7 +28,7 @@ const userService = {
         if (error) {
           return callback(error);
         }
-        return callback(null, results[0]);
+        return callback(null, results);
       }
     );
   },
@@ -59,6 +59,18 @@ const userService = {
     pool.query(
       "SELECT * FROM users WHERE user_id=?",
       [data.user_id],
+      (error, results, fields) => {
+        if (error) {
+          return callback(error);
+        }
+        return callback(null, results[0]);
+      }
+    );
+  },
+  getByEmail: (data, callback) => {
+    pool.query(
+      "SELECT * FROM users WHERE user_email=?",
+      [data.user_email],
       (error, results, fields) => {
         if (error) {
           return callback(error);

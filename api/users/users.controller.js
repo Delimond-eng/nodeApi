@@ -1,13 +1,20 @@
 const {
   genSaltSync,
   hashSync,
+  compareSync,
 } = require("bcrypt"); /*allow to crypt string password*/
+
+const {
+  sign,
+} = require("jsonwebtoken"); /*parsing token for some user connected*/
+
 const {
   create,
   update,
   deleteUser,
   getAll,
   getById,
+  getByEmail,
 } = require("./users.service");
 
 const userController = {
@@ -22,10 +29,7 @@ const userController = {
     create(body, (err, results) => {
       if (err) {
         console.log(err);
-        return res.status(500).json({
-          status: "failed",
-          message: "Database connection error!",
-        });
+        return false;
       }
       return res.status(200).json({
         status: "success",
@@ -44,9 +48,12 @@ const userController = {
     update(body, (err, results) => {
       if (err) {
         console.log(err);
+        return false;
+      }
+      if (!results) {
         return res.status(500).json({
           status: "failed",
-          message: "Database connection error!",
+          message: "user not exit!",
         });
       }
       return res.status(200).json({
@@ -63,9 +70,12 @@ const userController = {
     deleteUser(body, (err, results) => {
       if (err) {
         console.log(err);
+        return false;
+      }
+      if (!results) {
         return res.status(500).json({
           status: "failed",
-          message: "Database connection error!",
+          message: "user not exit!",
         });
       }
       return res.status(200).json({
@@ -82,10 +92,7 @@ const userController = {
     getById(body, (err, results) => {
       if (err) {
         console.log(err);
-        return res.status(500).json({
-          status: "failed",
-          message: "Database connection error!",
-        });
+        return false;
       }
       return res.status(200).json({
         status: "success",
@@ -99,15 +106,48 @@ const userController = {
     getAll((err, results) => {
       if (err) {
         console.log(err);
-        return res.status(500).json({
-          status: "failed",
-          message: "Database connection error!",
-        });
+        return false;
       }
       return res.status(200).json({
         status: "success",
         data: results,
       });
+    });
+  },
+
+  login: (req, res) => {
+    const body = req.body;
+    getByEmail(body, (err, results) => {
+      if (err) {
+        console.log(err);
+        return false;
+      }
+      if (!results) {
+        return res.json({
+          status: "failed",
+          message: "invalid email or password!",
+        });
+      }
+      const result = compareSync(body.user_pass, results.user_pass);
+      console.log(result);
+      console.log(body.user_pass);
+      console.log(results.user_pass);
+      if (result) {
+        results.user_pass = undefined;
+        const jsonToken = sign({ result: results }, "que1234", {
+          expiresIn: "1h",
+        });
+        return res.json({
+          status: "success",
+          data: results,
+          token: jsonToken,
+        });
+      } else {
+        return res.json({
+          status: "failed",
+          message: "invalid email or password!",
+        });
+      }
     });
   },
 };
