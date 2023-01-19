@@ -8,6 +8,8 @@ const {
   sign,
 } = require("jsonwebtoken"); /*parsing token for some user connected*/
 
+const { statment } = require("../../builder/builder");
+
 const {
   create,
   update,
@@ -21,15 +23,25 @@ const userController = {
   createUser: (req, res) => {
     const body = req.body;
 
-    //crypt user password
+    //Hash pass
     const salt = genSaltSync(10);
     body.user_pass = hashSync(body.user_pass, salt);
+    //end Hash
 
-    //create statment
-    create(body, (err, results) => {
+    const sql =
+      "INSERT INTO users(user_name, user_gender, user_email, user_pass) VALUES(?,?,?,?)";
+    const data = [
+      body.user_name,
+      body.user_gender,
+      body.user_email,
+      body.user_pass,
+    ];
+    statment(sql, data, (err, results) => {
       if (err) {
         console.log(err);
-        return false;
+        return res.json({
+          status: "failed",
+        });
       }
       return res.status(200).json({
         status: "success",
@@ -120,7 +132,10 @@ const userController = {
     getByEmail(body, (err, results) => {
       if (err) {
         console.log(err);
-        return false;
+        return res.json({
+          status: "failed",
+          message: "database connection failed",
+        });
       }
       if (!results) {
         return res.json({
@@ -128,10 +143,9 @@ const userController = {
           message: "invalid email or password!",
         });
       }
+
+      /* Check and compare pass*/
       const result = compareSync(body.user_pass, results.user_pass);
-      console.log(result);
-      console.log(body.user_pass);
-      console.log(results.user_pass);
       if (result) {
         results.user_pass = undefined;
         const jsonToken = sign({ result: results }, "que1234", {

@@ -4,12 +4,10 @@ require("dotenv").config();
 //express
 const express = require("express");
 const app = express();
-
 /*  begin body parser  */
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 /*  end body parser   */
-
 //app routes:
 const userRouter = require("./api/users/users.router");
 app.use("/api/users", userRouter);
